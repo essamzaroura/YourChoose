@@ -1,35 +1,41 @@
-import openai
-from backend.database import get_user_preferences, update_user_preferences  # ✅ CORRECT
-from backend.config import OPENAI_API_KEY
-
-
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import OPENAI_API_KEY
+import google.generativeai as genai
+from backend.database import get_user_preferences, update_user_preferences
+from backend.config import GEMINI_API_KEY
 
 class RecommendationEngine:
     def __init__(self):
-        # Initialize OpenAI API with the imported key
-        openai.api_key = OPENAI_API_KEY
-        self.model = "gpt-4"
+        # Initialize Gemini AI with the imported key
+        genai.configure(api_key=GEMINI_API_KEY)
+        self.model = genai.GenerativeModel("gemini-pro")
 
     def generate_recommendations(self, user_id, query='', context={}):
         user_prefs = get_user_preferences(user_id)
         prompt = self._construct_prompt(query, user_prefs, context)
 
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": "You are a helpful recommendation assistant that provides personalized suggestions."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=400,
-            temperature=0.2,
-            top_p=0.9
-        )
+        try:
+            response = self.model.generate_content(prompt)
+            recommendations = self._parse_response(response.text)
+            self._update_user_preferences(user_id, query, recommendations)
+            return recommendations
+        except Exception as e:
+            print(f"Error generating recommendations: {e}")
+            return []  # Return an empty list or handle the error appropriately
 
-        recommendations = self._parse_response(response.choices[0].message['content'])
-        self._update_user_preferences(user_id, query, recommendations)
+    def _construct_prompt(self, query, user_prefs, context):
+        # Construct the prompt based on your needs
+        prompt = f"User Query: {query}\nUser Preferences: {user_prefs}\nContext: {context}\nProvide recommendations."
+        return prompt
 
+    def _parse_response(self, response_text):
+        # Parse the response text to extract recommendations
+        # This part depends on the format of the Gemini response
+        # You'll need to customize this based on Gemini's output
+        # Example: if the response is a list separated by newlines
+        recommendations = [item.strip() for item in response_text.split('\n') if item.strip()]
         return recommendations
+
+    def _update_user_preferences(self, user_id, query, recommendations):
+        # Update user preferences based on interactions
+        # This part depends on your database schema and logic
+        # Example: you might track queries and recommendations
+        update_user_preferences(user_id, query, recommendations)

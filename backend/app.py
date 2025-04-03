@@ -1,19 +1,15 @@
-# app.py - Main Flask application
+# app.py - Main Flask Application with Gemini AI for Chat and Recommendations
+
 import os
 import sys
-from backend.models.recommendation_engine import RecommendationEngine
-
-# Ensure the backend and models directories are in sys.path
-backend_path = os.path.abspath(os.path.dirname(__file__))
-sys.path.insert(0, backend_path)
-sys.path.insert(0, os.path.join(backend_path, 'models'))
-
-
-# Flask imports
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token
 from dotenv import load_dotenv
+import google.generativeai as genai  # Import Gemini AI SDK
+
+# Ensure the backend and models directories are in sys.path
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Load environment variables
 load_dotenv()
@@ -21,31 +17,30 @@ load_dotenv()
 # Import modules AFTER modifying sys.path
 try:
     from models.recommendation_engine import RecommendationEngine
-    from models.user import User
+    from config import GEMINI_API_KEY  # Load API Key securely
 except ModuleNotFoundError as e:
     print(f"Module Import Error: {e}")
     print("Make sure the 'models' folder contains '__init__.py' and is properly structured.")
     sys.exit(1)
 
 # Initialize Flask app
-
 app = Flask(__name__)
-
-@app.route("/")  # This defines a route for the homepage
-def home():
-    return "Welcome to YourChoose-Project API!"
 CORS(app)
 
-# Configure JWT
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'your-secret-key')
-jwt = JWTManager(app)
+# Set Gemini API Key
+genai.configure(api_key=GEMINI_API_KEY)
 
 # Initialize recommendation engine
 rec_engine = RecommendationEngine()
 
+@app.route("/")
+def home():
+    """Home route displaying welcome message."""
+    return "Welcome to YourChoose-Project API! Home Page with Recommendations & AI Chat."
+
 @app.route('/api/recommendations', methods=['POST'])
-@jwt_required()
 def get_recommendations():
+    """Generates AI-powered recommendations based on user input."""
     user_id = request.json.get('user_id')
     query = request.json.get('query', '')
     context = request.json.get('context', {})
@@ -54,17 +49,24 @@ def get_recommendations():
     
     return jsonify({'success': True, 'recommendations': recommendations})
 
-@app.route('/api/auth/login', methods=['POST'])
-def login():
-    username = request.json.get('username')
-    password = request.json.get('password')
-    
-    user = User.authenticate(username, password)
-    if not user:
-        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
-    
-    access_token = create_access_token(identity=user["id"])
-    return jsonify({'success': True, 'token': access_token})
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    """Handles AI chatbot interactions using Gemini AI, summarizing in plain language."""
+    data = request.json
+    user_input = data.get("message", "")
+
+    if not user_input:
+        return jsonify({"error": "No message provided"}), 400
+
+    try:
+        model = genai.GenerativeModel("gemini-pro")
+        response = model.generate_content(f"You are a professional journalist summarizing: {user_input}")
+        reply = response.text
+    except Exception as e:
+        return jsonify({"error": f"Failed to process AI response: {str(e)}"}), 500
+
+    return jsonify({"response": reply})
+
 
 if __name__ == '__main__':
     app.run(debug=True)

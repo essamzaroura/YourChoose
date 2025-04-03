@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "homepage": ".",
+  "start": "react-scripts --max-old-space-size=4096 start",
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
@@ -38,5 +39,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1"
   }
 }

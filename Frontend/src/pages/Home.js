@@ -20,7 +20,12 @@ function Home() {
       description: 'Explore a mansion and indulge in luxury and opulence with your loved ones.'
     }
   ]);
-
+  
+  const Home = React.lazy(() => import('./pages/Home'));
+  const updateSuggestions = () => {
+    setSuggestions([...suggestions, { category: 'New', image: 'https://source.unsplash.com/random/400x200/?beach', description: 'Enjoy a beach trip!' }]);
+  };
+  
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };

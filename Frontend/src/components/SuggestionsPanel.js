@@ -1,6 +1,6 @@
 // src/components/SuggestionsPanel.js
 import React from 'react';
-import { Box, Typography, Card, CardContent, CardMedia, CardActions, Button } from '@mui/material';
+import { Box, Typography, Card, CardMedia, CardActions, Button } from '@mui/material';
 
 function SuggestionsPanel({ suggestions = [], onLike, onExplore }) {
   return (
