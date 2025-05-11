@@ -1,14 +1,10 @@
-# config.py - Stores API keys and configurations
-
+# backend/config.py
 import os
 from dotenv import load_dotenv
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Load environment variables from a .env file
 load_dotenv()
-
-# Get API key from environment (secure way)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyAl67Y10Vb41YPrR0SwvLy9DHSTO8AjoHE")
-
-# Other configuration settings (add as needed)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///database.db")
+
+if not GEMINI_API_KEY:
+    raise ValueError("⚠️ ERROR: GEMINI_API_KEY not found in environment variables. Please set it in the .env file.")

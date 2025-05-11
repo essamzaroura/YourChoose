@@ -1,53 +1,41 @@
-// Chat.js (ChatGPT-like AI chat with session history)
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, List, ListItem, ListItemText } from '@mui/material';
+import axios from 'axios';
 
-function Chat() {
-  const [input, setInput] = useState('');
-  const [history, setHistory] = useState([]);
-  const [sessionId, setSessionId] = useState(Date.now());
+const Chat = () => {
+  const [message, setMessage] = useState('');
+  const [response, setResponse] = useState('');
+  const [error, setError] = useState('');
 
-  const handleAskAI = () => {
-    if (!input.trim()) return;
-
-    // Simulate AI response (you can connect this to Gemini API)
-    const reply = `AI: ${input} 🤖`;
-
-    const newHistory = [...history, { session: sessionId, question: input, answer: reply }];
-    setHistory(newHistory);
-    setInput('');
-  };
-
-  const newSession = () => {
-    setSessionId(Date.now());
-    setHistory([]);
+  const handleAskAI = async () => {
+    setError('');
+    setResponse('');
+    try {
+      const res = await axios.post('/api/chat', { message });
+      setResponse(res.data.reply);
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || 'Failed to connect to AI service';
+      setError(errorMsg.includes('429') 
+        ? 'Quota exceeded. Please check your plan or try again later (retry in 58s).'
+        : errorMsg);
+    }
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Chat with Gemini AI</Typography>
-      <Button variant="outlined" sx={{ mt: 1, mb: 2 }} onClick={newSession}>New Session</Button>
-
-      <List sx={{ maxHeight: '60vh', overflow: 'auto', mb: 2 }}>
-        {history.map((msg, i) => (
-          <ListItem key={i} sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-            <ListItemText primary={`You: ${msg.question}`} />
-            <ListItemText secondary={msg.answer} />
-          </ListItem>
-        ))}
-      </List>
-
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <TextField
-          fullWidth
-          value={input}
-          placeholder="Ask something like Gemini..."
-          onChange={(e) => setInput(e.target.value)}
+    <div>
+      <h1>Chat with Gemini AI</h1>
+      {error && <div style={{ color: 'red' }}>{error}</div>}
+      {response && <div>{response}</div>}
+      <div>
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Ask something to Gemini..."
         />
-        <Button variant="contained" onClick={handleAskAI}>Ask AI</Button>
-      </Box>
-    </Box>
+        <button onClick={handleAskAI}>Ask AI</button>
+      </div>
+    </div>
   );
-}
+};
 
 export default Chat;
