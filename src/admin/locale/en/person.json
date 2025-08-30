@@ -1,0 +1,14 @@
+{
+  "labels": {
+    "Person": "Staff"
+  },
+  "actions": {
+    "dontTouchThis": "Don't touch this!!!"
+  },
+  "properties": {
+    "organizationId": "Organization"
+  },
+  "messages": {
+    "youCanSetupGuards": "You can setup guards before an action - just in case."
+  }
+}
